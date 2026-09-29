@@ -1,0 +1,6 @@
+interface:
+  display_name: "sgit-commit"
+  short_description: "结合会话与差异生成提交文案，确认文案和范围后执行本地提交"
+  default_prompt: "使用 $sgit-commit，结合当前会话和实际改动在一个文本块中生成提交主题与编号正文；展示候选范围并等待我确认后执行本地提交。"
+policy:
+  allow_implicit_invocation: false
