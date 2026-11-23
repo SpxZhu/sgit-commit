@@ -1,7 +1,6 @@
 # sgit-commit: Deterministic Git Commits & SemVer Pro for AI Agents
 
-[![Agensi](https://img.shields.io/badge/Agensi-1--Click%20Install%20($5)-2563eb?logo=rocket&logoColor=white)](https://www.agensi.io/creators/spxzhu)
-[![Bundle](https://img.shields.io/badge/Bundle-Sgit%20Pro%20Suite%20(20%25%20OFF)-16a34a?logo=gift&logoColor=white)](https://www.agensi.io/bundles/sgit-pro-complete-git-worktree-suite-for-ai-agents)
+[![Agensi](https://img.shields.io/badge/Agensi-1--Click%20Install%20($2)-2563eb?logo=rocket&logoColor=white)](https://www.agensi.io/creators/spxzhu)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Python: 3.10+](https://img.shields.io/badge/Python-3.10%2B-brightgreen.svg?logo=python&logoColor=white)](https://www.python.org/)
 [![Conventional Commits: 1.0.0](https://img.shields.io/badge/Conventional%20Commits-1.0.0-yellow.svg)](https://www.conventionalcommits.org/en/v1.0.0/)
@@ -9,8 +8,7 @@
 
 > [!TIP]
 > **Available on Agensi Marketplace (Instant 1-Click Install via MCP):**
-> - ⚡ **[Get this Skill on Agensi ($5.00)](https://www.agensi.io/creators/spxzhu)**
-> - 🎁 **[Save 20% on the Complete Sgit Pro Suite ($7.99)](https://www.agensi.io/bundles/sgit-pro-complete-git-worktree-suite-for-ai-agents)**
+> - ⚡ **[Get this Skill on Agensi ($2.00)](https://www.agensi.io/creators/spxzhu)**
 
 A deterministic, token-saving Git commit and Semantic Versioning (SemVer) skill tailored for modern AI coding assistants and agents (Claude Code, Cursor, Codex, Windsurf, Antigravity, OpenClaw, Roo Code).
 
