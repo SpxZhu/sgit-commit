@@ -1,53 +1,41 @@
-# 提交执行规则
+# Commit Execution
 
-提交模式读取。先只读展示范围、版本计划及提交文案；确认后更新版本并提交。提交核验后另行展示 tag、远程和 Release 计划，确认后才发布。最初请求或其他方案的确认不能替代这两次具体确认；宿主审批及仓库门禁仍有效。
+Read this reference before presenting the confirmation proposal whenever a commit is to be performed. All scope, version sources, messages, and existing verification must be fully prepared beforehand. By default, commits are strictly local and do not perform network calls or release pre-checks.
 
-## 1. 只读核定候选范围、版本与发布条件
+## Execution After User Confirmation
 
-确认仓库、分支、HEAD（可能尚无）和索引。未解决冲突、进行中的 merge／rebase／cherry-pick、特殊索引或仓库不明时停止；不初始化仓库、接管操作或递归提交子模块／嵌套仓库。
+Update version files per the approved plan and verify written values. Execute version file staging and commit submission in a single continuous tool step.
+Pass entire confirmed paths to the script for atomic staging; for mixed files containing unapproved hunks, pre-stage only approved hunks manually. "Staged-only" mode preserves the existing index and only appends approved version updates. Renames must include both old and new paths in the scope.
 
-落实候选文件／变更块，标明已暂存、未暂存、未跟踪及排除项。仅已暂存模式以业务改动的索引快照为准，版本计划另列。重命名核对新旧路径，删除核对意图；混合变更只选明确可隔离的块。
+Pass the following JSON payload via standard input (UTF-8, real newlines; do not concatenate messages into shell strings):
 
-索引含范围外内容时写入前停止；未经授权，不取消暂存、stash、重写索引或顺带提交。独立任务可建议拆分，不擅自多次提交。
+```json
+{
+  "message": "fix(level): fix score calculation after retry\n\nBug Fixes\n- Reset score accumulator when retrying level\n",
+  "paths": ["src/level.lua", "version.txt"],
+  "stage_paths": ["src/level.lua", "version.txt"],
+  "expected_head": "<HEAD SHA returned from pre-confirmation inspect>"
+}
+```
 
-查明权威版本来源、已提交版本、同步位置及现有版本改动的归属，按 SKILL.md 计算目标版本；已合规更新则直接采用。来源／格式／同步范围不明或混有无法隔离的改动时，先展示方案并确认。“仅已暂存”若需增加版本改动，也须先确认扩大的范围；版本更新不得纳入其他任务改动。
+- `paths`: Array of all approved files.
+- `stage_paths`: Subset of files to be whole-file staged automatically by the script (default empty array). Exclude mixed files or files from staged-only mode from `stage_paths`.
+- Paths must be relative to repository root and separated by `/`. Use `null` for `expected_head` in initial commits.
 
-默认发布时，提交前核对当前分支上游远程、平台、发布能力及本地／远程同名 tag。目标不明、平台不受支持、tag 冲突或已知无法发布时先解决，不进入提交；检查不保证后续网络／权限成功。明确仅本地提交时跳过发布检查及第 4 节。遵守现有 tag／Release 门禁。
+Invoke the script:
 
-展示完整文案、范围、当前及目标版本与修改位置；任一项变化都重展并重新确认。
+```text
+python scripts/commit.py submit --repo <repo> --confirmed
+```
 
-**完成条件：版本及适用的发布目标明确无阻塞，用户已确认文案、范围和版本计划；未选内容未动。**
+`submit` performs a single atomic pre-check:
+1. Rejects any out-of-scope files present in the Git index.
+2. Stages files listed in `stage_paths`.
+3. Invokes `git commit` directly, preserving author identity, GPG signatures, and repository pre-commit hooks.
+4. Returns the commit SHA, actual message, and remaining status.
 
-## 2. 确认后更新版本、暂存并以最终索引重核
+Upon normal success, report the result immediately. Do not redundantly re-run inspection, diffs, or tree verifications.
 
-按确认的计划修改版本，只暂存审查过的范围。“仅已暂存”时保留原索引，仅加入确认的版本改动。整文件均属范围内才可用 `git --literal-pathspecs add -- <路径…>`；不得用 `git add .`、无范围的 `git add -A`、`git commit -a` 或给 `git commit` 传路径绕过核查。
+Only execute pre-commit checks explicitly required by the repository and lacking applicable evidence. Pure commit execution does not trigger full builds, tests, or code reviews.
 
-暂存后完整核对 `git diff --cached`、版本同步位置和文案；工作区预览不能代替索引证据。索引、版本或文案有实质变化时，重展范围、版本和完整文案并重新确认。
-
-执行 `git diff --cached --check` 及项目门禁，只复用适用于最终索引的证据；`--check` 不是功能测试。区分命令错误与正常差异退出码（`git diff --cached --quiet`：0 无差异、1 有差异）；无变化则结束，不空提交。
-
-检查明显凭据、私钥和意外生成物，脱敏报告风险，不静默改代码或扩大排查。记录 HEAD 与已审索引；分支、HEAD、索引或 hook／格式化结果变化时重新审查，不盲目暂存重试。
-
-**完成条件：索引恰等于确认范围且包含目标版本，文案匹配最终索引，门禁无阻塞。**
-
-## 3. 创建并核验本地提交
-
-将“主题＋空行＋编号正文”写入系统临时目录下唯一的 UTF-8 无 BOM 文件，再用 `git commit -F <消息文件路径>` 提交；支持可靠标准输入的工具也可使用 `git commit -F -`。通过文件／参数接口传递数据并正确处理路径引用，不将文案拼接成可执行 Shell，不依赖字面量 `\n` 生成换行。不要给此命令附加路径参数。
-
-保留身份、签名和 hooks，不改 Git 配置或绕过失败（如 `--no-verify`、关闭签名）。本阶段不 push、amend、reset、rebase、清理或覆盖；推送须按第 4 节单独确认。
-
-核对新 HEAD／父提交、实际差异、版本及 `git log -1 --format=%B`，再查 `git status --short`。报告短哈希、文案和剩余改动；仅有证据时声称工作区干净。hook 或并发操作造成不一致时如实报告，不自动 amend 或回滚。
-
-失败时报告阻塞及索引状态，不扩大范围重试；只清理本次临时消息文件，保留仓库现场。
-
-**完成条件：提交内容、版本和文案已核验，范围外改动保留；或明确报告未提交原因。**
-
-## 4. 单独确认后创建 tag 并发布 Release
-
-提交核验后，展示附注 tag `v<version>`、目标提交、上游远程／分支、拟推送内容及 Release 标题、说明、正式版／预发布版属性。默认标题为 `v<version>`，说明用已核验提交文案，类型为正式版；用户明确说明优先。计划变化即重展并重新确认；未确认则停在本地提交。
-
-确认后复核 HEAD、分支／上游、版本和本地／远程 tag；变化或冲突则停止重核。创建指向已核验提交的附注 tag，向确认的远程推送提交及 tag；不强推、移动 tag 或改选远程。推送成功后用平台支持的认证工具／接口以同一 tag 创建 Release，遵守权限要求；核验远程提交、tag、Release 并报告链接或标识。
-
-失败时保留现场，逐步报告已完成状态与阻塞，不声称发布成功；不自动回滚、改版本或重试有副作用的动作。恢复前先核对现状。
-
-**完成条件：远程 tag 指向确认的提交且 Release 使用该 tag，均已核验；或明确报告停止位置和留下的状态。**
+If commit fails, preserve the working tree and inspect error outputs and the actual `HEAD` before deciding on recovery; do not auto-retry, amend, reset, or bypass hooks. If the user explicitly requests publishing, proceed to [Publish Guidelines](publish.md).

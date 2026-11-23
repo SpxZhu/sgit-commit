@@ -1,109 +1,135 @@
-# sgit-commit
+# sgit-commit: Deterministic Git Commits & SemVer Pro for AI Agents
 
-版本：1.0.0.1 · 原公开文档核验日期：2026-09-23
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Python: 3.10+](https://img.shields.io/badge/Python-3.10%2B-brightgreen.svg)](https://www.python.org/)
+[![Conventional Commits: 1.0.0](https://img.shields.io/badge/Conventional%20Commits-1.0.0-yellow.svg)](https://www.conventionalcommits.org/en/v1.0.0/)
+[![Tests: 15 Passed](https://img.shields.io/badge/Tests-15%20Passed-success.svg)](tests/)
 
-依据当前会话和 Git 差异生成提交主题及编号正文。确认范围、文案与四段版本计划后提交；另经确认，以 `v<version>` tag 推送并发布 Release。只预览时保持只读。
+A deterministic, token-saving Git commit and Semantic Versioning (SemVer) skill tailored for modern AI coding assistants and agents (Claude Code, Cursor, Codex, Windsurf, Antigravity, OpenClaw, Roo Code).
 
-## 安装
+---
 
-### Codex
+## ⚡ The Problem
 
-解压 `sgit-commit-codex.zip`，将整个 `sgit-commit` 文件夹放入以下一个位置：[1]
+When asking an AI agent to "commit my changes", standard prompting fails in predictable ways:
+* **Token Exhaustion**: The agent runs 4–6 separate shell queries (`git status`, `git branch`, `git diff`, `git log`), burning thousands of context tokens on repetitive roundtrips.
+* **Commit Hallucinations**: Vague, unstructured commit messages that lump unrelated files together or invent non-existent fixes.
+* **Version Drift**: Version bumping (`1.2.3 → 1.2.4`) is either forgotten, decoupled from the commit, or requires multiple user corrections.
+* **Destructive Overreach**: Agents attempting to force-push, wipe unstaged changes, or bypass pre-commit hooks (`--no-verify`).
 
-```text
-跨项目：~/.agents/skills/sgit-commit/
-单项目：<repo>/.agents/skills/sgit-commit/
-```
+---
 
-Windows 中 `~` 指运行 Codex 的用户主目录，WSL 使用其 Linux 主目录。避免在同一宿主全局和项目重复安装同名技能，或覆盖自定义版本。
+## ✨ The Solution: How `sgit-commit` Works
 
-通过 `$sgit-commit` 调用。`agents/openai.yaml` 关闭隐式调用；更新未出现时重启 Codex。[1]
+`sgit-commit` couples structured agent playbooks (`SKILL.md`) with lightweight, deterministic Python standard-library scripts to execute bulletproof Git workflows:
 
-### Claude Code
+1. **Single-Shot Multi-Threaded Inspection (`inspect_repo.py`)**:
+   Captures `HEAD`, active branch, ongoing Git operations (rebase/merge/cherry-pick), full status entries, and staged/unstaged diff statistics concurrently in one instant call.
+2. **Conventional Commits 1.0.0 with Categorized Breakdown**:
+   Generates a standardized title (`<type>(<scope>): <summary>`) accompanied by categorized bullet points (`Features`, `Bug Fixes`, `Deprecations`, `Performance`, `Refactoring`, etc.). Adapts seamlessly between English and Chinese.
+3. **Automated 3-Segment Semantic Versioning (`commit.py version`)**:
+   Automatically baselines against committed `HEAD`, increments the patch segment (or specified major/minor bump), and bundles version synchronization into the same atomic commit.
+4. **Atomic Submit with Strict Boundaries (`commit.py submit`)**:
+   Passes the approved plan via JSON to `submit`, which verifies that no unapproved files exist in the index, stages selected files, and creates the commit while preserving GPG signatures and Git hooks.
+5. **Zero External Dependencies**:
+   Built strictly with Python 3.10+ standard library and the local `git` binary. No `pip install` required.
 
-解压 `sgit-commit-claude.zip`，将整个 `sgit-commit` 文件夹放入以下一个位置：[2]
+---
 
-```text
-跨项目：~/.claude/skills/sgit-commit/
-单项目：<repo>/.claude/skills/sgit-commit/
-```
+## 📦 Compatibility & Supported Platforms
 
-通过 `/sgit-commit` 调用。Claude Code 包增加 `disable-model-invocation: true`，核心正文与 Codex 包一致；仍在当前会话执行，不额外授予工具权限。[2]
+| Platform | Location / Setup | Calling Convention |
+| --- | --- | --- |
+| **Agensi.io (MCP)** | Install via Agensi Marketplace | Natural language / Tool invocation |
+| **Claude Code** | `~/.claude/skills/sgit-commit/` | `/sgit-commit` |
+| **Cursor / Windsurf** | `~/.agents/skills/sgit-commit/` | `$sgit-commit` or prompt |
+| **Codex CLI** | `~/.agents/skills/sgit-commit/` | `$sgit-commit` |
+| **Antigravity** | `~/.gemini/config/skills/sgit-commit/` | `/sgit-commit` |
 
-这是本地技能目录包，并非 ChatGPT 插件或 claude.ai 上传格式。
+---
 
-## 使用
+## 🚀 Quick Start & Usage
 
-以下是自然语言调用示例：
-
-默认提交及发布流程：
-
-```text
-$sgit-commit
-```
-
-仅预览已暂存改动：
-
-```text
-$sgit-commit 仅根据已暂存内容生成 message 和 description，不提交。
-```
-
-指定范围：
-
-```text
-$sgit-commit 提交本次会话对应的修改，不包含其他任务的改动。
-```
-
-Claude Code 将 `$sgit-commit` 换为 `/sgit-commit`。技能默认选择当前会话相关改动及必要的版本更新，区分已暂存、未暂存与未跟踪内容。提交前确认具体范围、版本计划及文案；最终索引有实质变化则重新确认。提交核验后另行确认发布计划。只预览时不请求提交确认；范围不清、索引混有范围外内容或项目门禁未通过时先处理阻塞。
-
-## 版本与发布
-
-每次由本技能执行的提交都包含项目版本更新，沿用权威来源及同步惯例。默认递增第四段（`1.2.3.4 → 1.2.3.5`）；指定提升较高位时右侧归零（`1.2.3.4 → 1.3.0.0`）；目标须高于已提交版本。已合规更新则不重复递增。来源、同步位置或格式不明时先确认方案；仅已暂存提交若需加入版本改动，先确认扩大范围。
-
-默认发布前核对上游远程、平台及同名 tag。提交后展示附注 tag、远程和 Release 内容；确认后才推送并发布。Release 默认用 `v<version>` 作标题、已核验提交文案作说明，类型为正式版。明确仅本地提交则跳过发布；失败时保留现场并报告进度。本技能只约束自身执行的提交。
-
-## 输出
-
-`message` 是主题，`description` 是编号正文；合并后作为完整 Git commit message，格式如下：[3]
+Simply invoke the skill in your agent prompt:
 
 ```text
-完善版本与发布流程
+# Standard commit: Inspect, generate message, bump version, and commit locally
+/sgit-commit
 
-1. 提交时更新四段版本号，并将版本改动纳入同一提交。
-2. 提交后单独确认 tag、推送及 Release 内容。
+# Preview only (read-only): See diff analysis, proposed message, and version plan without modifying anything
+/sgit-commit preview changes only, do not commit
+
+# Scoped commit: Only commit files related to authentication
+/sgit-commit only commit files related to auth service
 ```
 
-以上仅为格式示例，实际文案须对应差异。文本不含 `message`、`description` 标签或代码围栏；条数按实际改动决定。
+### Typical Output Preview
 
-## 文件分工
+```text
+---
+Scope: src/auth.py, src/token.py, package.json
+Version: 1.4.2 -> 1.4.3 (patch increment)
+Proposed Commit:
+feat(auth): add refresh token rotation and revoke expired sessions
+
+Features
+- Support refresh token rotation on user re-authentication
+- Automatically invalidate revoked session tokens
+
+Bug Fixes
+- Fix race condition during concurrent token refresh
+---
+Confirm this proposal to execute commit.
+```
+
+---
+
+## 📁 Repository Structure
 
 ```text
 sgit-commit/
-├── SKILL.md              # 需求、证据、范围、文案与确认规则
-├── references/
-│   └── commit.md         # 单独调用或要求提交时读取，规定版本、提交和发布流程
+├── SKILL.md                 # Primary skill definition and instructions for AI agents
+├── README.md                # Documentation & marketplace overview
+├── LICENSE                  # MIT License
 ├── agents/
-│   └── openai.yaml       # 仅 Codex 包包含，控制显式调用
-└── README.md             # 人工安装和使用说明，不作为技能必读资料
+│   └── openai.yaml          # Agent platform interface metadata
+├── references/              # Detailed specification playbooks
+│   ├── commit.md            # Atomic commit execution rules & stdin schema
+│   ├── message.md           # Conventional Commits format & categories
+│   ├── publish.md           # Optional tagging & release workflows
+│   └── version.md           # 3-segment SemVer increment rules
+├── scripts/                 # Self-contained Python standard-library scripts
+│   ├── __init__.py
+│   ├── commit.py            # Atomic submit & SemVer calculator
+│   ├── git_common.py        # Shared Git primitives & worktree handlers
+│   └── inspect_repo.py      # Single-shot multithreaded repository inspection
+└── tests/                   # Automated unit and integration test suite
+    ├── test_commit.py       # Full commit lifecycle & version tests
+    └── test_inspect.py      # Repository inspection & snapshot tests
 ```
 
-发布需目标平台可用的认证工具／接口及权限；仓库门禁仍须满足。
+---
 
-编写参考 `writing-for-agents` 和 `SKILL-MECHANICS.md`，用于按分支读取和职责去重。[4][5]
+## 🧪 Testing
 
-## 核对来源
+Run the included test suite against any local Python 3.10+ installation:
 
-[1] OpenAI：Build skills；本地目录、显式调用、`agents/openai.yaml`。
-`https://developers.openai.com/codex/skills`
+```bash
+python -m unittest discover -s tests -v
+```
 
-[2] Anthropic：Claude Code Skills；本地目录、调用及宿主扩展字段。
-`https://code.claude.com/docs/en/skills`
+All tests execute in isolated, disposable temporary Git repositories without altering your local development environment.
 
-[3] Git 官方：git-commit；完整消息格式、`-F`、暂存区与路径参数语义。
-`https://git-scm.com/docs/git-commit`
+---
 
-[4] Matt Pocock：writing-for-agents，公开上游。
-`https://raw.githubusercontent.com/mattpocock/skills/main/skills/productivity/writing-for-agents/SKILL.md`
+## 🔒 Security & Privacy
 
-[5] Matt Pocock：SKILL-MECHANICS.md，公开上游。
-`https://raw.githubusercontent.com/mattpocock/skills/main/skills/productivity/writing-for-agents/SKILL-MECHANICS.md`
+* **100% Local Execution**: Operates purely within your local file system and Git binary.
+* **No Telemetry / No Network Calls**: Never sends code, diffs, or metadata to any external server.
+* **Human-in-the-Loop Confirmation**: Modifying files or creating commits strictly requires user confirmation.
+
+---
+
+## 📄 License
+
+Distributed under the [MIT License](LICENSE). Copyright (c) 2026 SpxZhu.

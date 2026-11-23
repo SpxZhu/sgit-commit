@@ -1,48 +1,70 @@
 ---
 name: sgit-commit
-description: 根据会话与 Git 差异生成提交文案；确认后更新四段版本并提交，另经确认创建版本 tag、推送和发布 Release。
+description: Inspect repository diffs with minimal token overhead, generate Conventional Commits with structured categorization and automated 3-segment SemVer bumping, and perform atomic local commits upon explicit user confirmation.
 ---
 
-# sgit-commit
+# Git Commit (sgit-commit)
 
-在当前会话依据实际 Git 差异按需求／功能归纳改动，遵守仓库规则，不重开需求澄清或开发流程。
+Execute within the current session without restarting workflow contexts or spawning redundant sub-agents. Read repository-specific guidelines if present. Uses Python 3.10+ standard library and the local Git binary; zero external dependencies required.
 
-## 模式与范围
+## 1. Read-Only Discovery & Preview
 
-- 只生成／预览：展示文案及适用的版本计划后结束，保持只读。
-- 提交：展示范围、版本计划和文案，待用户确认后按 [提交执行规则](references/commit.md) 更新版本并提交；提交核验后，另取明确确认才创建 tag、推送和发布 Release。最初要求“直接提交／发布”不能替代具体确认。明确要求仅本地提交时跳过发布。
-- 范围按用户指令；默认只选当前会话相关改动，区分已暂存、未暂存及未跟踪内容。仅已暂存模式以索引中的业务改动为准，必要的版本更新另列；排除无关改动，混合变更无法归属或隔离时先核实。
-- 每次由本技能提交都在同一提交更新项目权威版本及惯例中的同步位置。版本为 `0.0.0.0` 四段非负整数：默认第四段加一；指定提升前三段时该段加一、右侧归零（`1.2.3.4 → 1.3.0.0`）；明确指定目标版本时从其说明，结果须高于已提交版本。候选改动已合规更新时不重复递增。来源缺失／冲突、格式不符或版本文件混有范围外修改时，先展示方案并确认。默认 tag 为 `v<version>`。
+1. **Single-Shot Repository Inspection**:
+   Run `scripts/inspect_repo.py` once:
+   ```bash
+   python scripts/inspect_repo.py --repo <path-to-repo>
+   ```
+   This returns `HEAD`, branch, active Git operations, all file status entries, and both staged and unstaged diff stat summaries in a single call with parallel execution. Do not rerun repetitive individual `git status` or `git branch` queries.
 
-## 取证与归纳
+2. **Scope Selection**:
+   By default, select only changes relevant to the current session or task. For staged-only requests, rely strictly on the index. Read selected diffs using `git --literal-pathspecs diff -- <paths...>` / `diff --cached`. For large changesets, inspect on a per-file basis. When multiple unrelated changes are present in the worktree, isolate and verify the relevant files with the user.
 
-1. 从当前会话提取目标和最新修正，以差异核实落地结果；未实现的计划不写成已完成。
-2. 先看仓库状态及差异概要，再按候选范围读 `git diff`、`git diff --cached` 和未跟踪文件。核对同一路径所选快照的净变化；新增文件也算变化。
-3. 覆盖每项所选变更，必要时补读关联实现。大文件、锁文件、生成物及二进制先核类型、来源、元数据和引用；截断输出不能作为完整证据。
-4. 按需求／功能合并跨文件改动，独立行为分列。纯文档或重构如实表述，不臆称功能、性能或验证结果。
-5. 沿用已知提交规范；不清楚时按需查配置或少量近期主题。只复用有效验证证据，遵守项目提交门禁；不默认全库扫描、读取其他会话、启动子 Agent、构建或全量测试。
+3. **Message Formulation**:
+   Follow [Commit Message Guidelines](references/message.md) to generate a single Conventional Commits subject and categorized body (Features, Bug Fixes, Deprecations, Refactoring, Docs, Tests, Build, CI, Style, Chore, Reverts). Adapt the body language to the repository or user preference (English by default, Chinese when working in Chinese). Do not invent changes when there is no net diff.
 
-会话不足则依差异保守表述，不猜测动机或把示例当结果；没有相关净变化或无法取证时说明原因，不生成空提交文案。
+4. **Preview Delivery**:
+   If the user only requests a preview or draft, present the candidate file scope, version increment plan, and formatted commit message in a copyable text block, then finish. When the user requests a commit, read [Commit Execution](references/commit.md) before presenting the confirmation proposal.
 
-## 文案规范
+## 2. Three-Segment Semantic Versioning
 
-**message**：单行主题，概括主要目标和结果。遵守现有语言、前缀及长度约束；否则用简短的中文动词句，无句末句号，不强加前缀或使用空泛标题。
+Follow [Version Guidelines](references/version.md). Baseline against the committed version at current `HEAD`.
+By default, automatically increment the third segment (patch: `1.2.3 → 1.2.4`) using `scripts/commit.py version`:
+```bash
+python scripts/commit.py version --current <current_val> --committed <committed_val>
+```
+If the working copy already contains an approved version upgrade higher than the baseline, reuse it. Routine patch increments are confirmed as part of the unified commit proposal.
 
-**description**：从 `1.` 连续编号，每项一行，写“做了什么＋必要的行为、边界或目的”。覆盖所有实质功能、修复、删除和兼容变化，合并重复项，不按文件凑数；不用无序／嵌套列表、计划、过程或未经证实的收益。保留必要技术名称，路径仅用于消歧。
+## 3. Confirmation & Atomic Execution
 
-展示和提交均用“主题＋空行＋编号正文”，不写 `message` / `description` 标签；仅在用户或仓库明确要求时添加 trailer，不自行附加署名或宣传文字。
+Before committing, present a complete proposal to the user:
+- **Files to commit**: Explicit paths and staging mode
+- **Version plan**: Source file, baseline value, candidate value, and target value
+- **Commit message**: Full subject and categorized body
 
-## 交付
+Obtain explicit confirmation for this specific proposal. Vague statements like "commit directly" do not bypass confirmation.
 
-先标明候选范围及未暂存／新增文件，再输出可复制的文本块：
-
-```text
-<提交主题>
-
-1. <第一项需求或功能改动>
-2. <第二项需求或功能改动>
+Upon user confirmation, update version files, stage approved files, and execute atomic submission in one step via standard input:
+```bash
+python scripts/commit.py submit --repo <repo> --confirmed
+```
+Input payload format:
+```json
+{
+  "message": "<Subject + Categorized Body>",
+  "paths": ["<approved_file_1>", "<version_file>"],
+  "stage_paths": ["<approved_file_1>", "<version_file>"],
+  "expected_head": "<HEAD_SHA_from_initial_inspect>"
+}
 ```
 
-提交模式在文本块外展示版本来源、当前与目标版本及拟修改位置，请求确认文案、范围和版本计划；任一项变化就完整重展并重新确认。只生成文案时省略非必要说明，不请求提交确认。
+The `submit` command verifies that the Git index contains no out-of-scope files, stages specified files, invokes `git commit` (preserving user signature and hooks), and returns the new commit SHA and status.
 
-交付前核对每项文案的差异依据、所选改动和版本计划、编号及排除项；不把未提交内容写成已提交，阻塞和未验证项放在文本块外。提交后报告实际结果并进入发布确认；发布后报告核验的 tag、推送和 Release 结果。
+## 4. Optional Tag & Release
+
+Standard commits finish locally. Only when the user explicitly requests a release or push, read [Tags and Releases](references/publish.md), and separately confirm the tag name (`v<version>`), target remote, push branch, and release notes before executing.
+
+## 5. Security & Trust Principles
+
+- **Local Execution**: All scripts operate locally using the Python standard library and standard Git CLI. No external network requests, analytics, or telemetry are made.
+- **Safety First**: Never runs force pushes, destructive resets, or hook bypasses (`--no-verify`).
+- **Human-in-the-Loop**: Strict confirmation boundary before modifying repository state or committing code.
