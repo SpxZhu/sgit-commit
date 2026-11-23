@@ -1,9 +1,15 @@
 # sgit-commit: Deterministic Git Commits & SemVer Pro for AI Agents
 
+[![Get on Agensi](https://img.shields.io/badge/Agensi-1--Click%20Install%20($5)-blue?style=for-the-badge&logo=rocket)](https://www.agensi.io/creators/spxzhu)
+[![Get Full Suite](https://img.shields.io/badge/Bundle-Sgit%20Pro%20Suite%20(20%25%20OFF)-brightgreen?style=for-the-badge&logo=shield)](https://www.agensi.io/bundles/sgit-pro-complete-git-worktree-suite-for-ai-agents)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Python: 3.10+](https://img.shields.io/badge/Python-3.10%2B-brightgreen.svg)](https://www.python.org/)
 [![Conventional Commits: 1.0.0](https://img.shields.io/badge/Conventional%20Commits-1.0.0-yellow.svg)](https://www.conventionalcommits.org/en/v1.0.0/)
 [![Tests: 15 Passed](https://img.shields.io/badge/Tests-15%20Passed-success.svg)](tests/)
+
+> ⚡ **Available on Agensi Marketplace**:
+> Instant 1-click installation via MCP for Claude Code, Cursor, Windsurf, Codex, and Antigravity!
+> 👉 **[Get this Skill on Agensi ($5.00)](https://www.agensi.io/creators/spxzhu)** · 🎁 **[Save 20% on the Full Sgit Pro Suite ($7.99)](https://www.agensi.io/bundles/sgit-pro-complete-git-worktree-suite-for-ai-agents)**
 
 A deterministic, token-saving Git commit and Semantic Versioning (SemVer) skill tailored for modern AI coding assistants and agents (Claude Code, Cursor, Codex, Windsurf, Antigravity, OpenClaw, Roo Code).
 
@@ -130,6 +136,7 @@ All tests execute in isolated, disposable temporary Git repositories without alt
 
 ---
 
-## 📄 License
+## 📄 License & Distribution
 
-Distributed under the [MIT License](LICENSE). Copyright (c) 2026 SpxZhu.
+* **Open-Source Evaluation**: Distributed under the [MIT License](LICENSE). Copyright (c) 2026 SpxZhu.
+* **Commercial Distribution & 1-Click MCP Setup**: Available through [Agensi.io](https://www.agensi.io/creators/spxzhu).
