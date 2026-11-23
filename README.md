@@ -139,5 +139,5 @@ All tests execute in isolated, disposable temporary Git repositories without alt
 
 ## 📄 License & Distribution
 
-* **Open-Source Evaluation**: Distributed under the [MIT License](LICENSE). Copyright (c) 2026 SpxZhu.
+* **Open-Source Evaluation**: Distributed under the [MIT License](LICENSE). Copyright (c) 2026 Julia5684.
 * **Commercial Distribution & 1-Click MCP Setup**: Available through [Agensi.io](https://www.agensi.io/creators/spxzhu).
